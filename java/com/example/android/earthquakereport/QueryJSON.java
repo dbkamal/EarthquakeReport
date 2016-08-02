@@ -443,7 +443,11 @@ public class QueryJSON {
 
     /** Public constructor */
     public QueryJSON(String jsonResponse){
-        JSONString = jsonResponse;
+
+        /** */
+        if (jsonResponse != null){
+            JSONString = jsonResponse;
+        }
     }
 
     public QueryJSON(){
@@ -481,8 +485,10 @@ public class QueryJSON {
                 }*/
 
                 /** Format the UNIX Time in human readable */
-                SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM DD, yyyy : HH:mm a");
+                SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd, yyyy : HH:mm a");
                 String date = dateFormatter.format(new Date(time));
+
+                Log.v("JSON_DATE", date);
 
                 /*positionString = date.indexOf(":");
 
