@@ -14,7 +14,7 @@ import java.util.Date;
  */
 public class QueryJSON {
 
-    private static String JSONString
+    /*private static String JSONString
             = "{  \n" +
             "   \"type\":\"FeatureCollection\",\n" +
             "   \"metadata\":{  \n" +
@@ -437,7 +437,23 @@ public class QueryJSON {
             "      59.6363,\n" +
             "      582.56\n" +
             "   ]\n" +
-            "}";
+            "}";*/
+
+    private static String JSONString;
+
+    /** Public constructor */
+    public QueryJSON(String jsonResponse){
+
+        /** */
+        if (jsonResponse != null){
+            JSONString = jsonResponse;
+        }
+    }
+
+    public QueryJSON(){
+    }
+
+    //EarthquakeAsync earthquakeAsync = new EarthquakeAsync();
 
     /** Create this method to pull the magnitude, location and date in a ArrayList */
     public static ArrayList<ReportWord> getQuakeDetails(){
@@ -469,8 +485,10 @@ public class QueryJSON {
                 }*/
 
                 /** Format the UNIX Time in human readable */
-                SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM DD, yyyy : HH:mm a");
+                SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd, yyyy : HH:mm a");
                 String date = dateFormatter.format(new Date(time));
+
+                Log.v("JSON_DATE", date);
 
                 /*positionString = date.indexOf(":");
 
