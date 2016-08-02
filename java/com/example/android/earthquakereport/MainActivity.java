@@ -20,7 +20,11 @@
     import java.net.MalformedURLException;
     import java.net.URL;
     import java.nio.charset.Charset;
+    import java.text.DateFormat;
+    import java.text.SimpleDateFormat;
     import java.util.ArrayList;
+    import java.util.Calendar;
+    import java.util.Date;
 
     public class MainActivity extends AppCompatActivity {
 
@@ -36,8 +40,11 @@
 
         public class EarthquakeAsync extends AsyncTask<URL, Void, String> {
 
+            private String today = getDate(0);
+            private String yesterday = getDate(-1);
+
             private String USGS_URL_JSON=
-                    "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2016-01-01&endtime=2016-01-31&minmag=6&limit=10";
+                    "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime="+yesterday+"&endtime="+today+"&minmag=4&limit=10";
                     //"http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-01-02";
 
             StringBuilder stringBuilder = new StringBuilder();
@@ -65,6 +72,11 @@
 
                 /** Perform a HTTP request */
                 try{
+                    /** Check if the url is null or not. If yes, return empty string */
+                    if (url == null){
+                        return jsonResponse;
+                    }
+
                     httpURLConnection = (HttpURLConnection) url.openConnection();
 
                     //Set Request Type
@@ -79,27 +91,36 @@
                     //Connect the URL
                     httpURLConnection.connect();
 
-                    /** Returns an input stream (byte) that reads from this open connection */
-                    inputStream = httpURLConnection.getInputStream();
+                    try{
+                        if (httpURLConnection.getResponseCode() == 200){
 
-                    /** Convert byte stream to character stream using specific charset */
-                    inputStreamReader = new InputStreamReader(inputStream, Charset.forName("UTF-8")); // charset.forName("UTF-8");
+                            /** Returns an input stream (byte) that reads from this open connection */
+                            inputStream = httpURLConnection.getInputStream();
 
-                    /** Reads text from a character-input stream. Buffer character */
-                    bufferedReader = new BufferedReader(inputStreamReader);
+                            /** Convert byte stream to character stream using specific charset */
+                            inputStreamReader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
 
-                    /** Read text from the buffer character and append into String object */
-                    jsonResponse = bufferedReader.readLine();
+                            /** Reads text from a character-input stream. Buffer character */
+                            bufferedReader = new BufferedReader(inputStreamReader);
 
-                    /** while loop to append each line into the String object */
-                    while (jsonResponse != null){
+                            /** Read text from the buffer character and append into String object */
+                            jsonResponse = bufferedReader.readLine();
 
-                        //Append
-                        stringBuilder.append(jsonResponse);
+                            /** while loop to append each line into the String object */
+                            while (jsonResponse != null){
 
-                        //Read next line
-                        jsonResponse = bufferedReader.readLine();
+                                //Append
+                                stringBuilder.append(jsonResponse);
+
+                                //Read next line
+                                jsonResponse = bufferedReader.readLine();
+                            }
+                        }
+
+                    }catch (IOException e){
+                        Log.e("Earthquake Report", e.toString());
                     }
+
                 }
                 catch (IOException e){
                     Log.v("USGS_JSON_HTTP", "" + e);
@@ -160,6 +181,27 @@
                     }
                 });
             }
+        }
+
+
+        /*public String getDate(long time){
+            *//** Format the UNIX Time in human readable *//*
+            SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-DD");
+            String date = dateFormatter.format(new Date(time));
+
+            return date;
+        }*/
+
+        public String getDate(int difference){
+
+            /** Format the UNIX Time in human readable */
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DATE, difference);
+
+            Log.v("Date", dateFormat.format(cal.getTime()));
+
+            return dateFormat.format(cal.getTime());
         }
 
     }
