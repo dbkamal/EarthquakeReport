@@ -1,5 +1,7 @@
     package com.example.android.earthquakereport;
 
+    import android.content.AsyncTaskLoader;
+    import android.content.Context;
     import android.content.Intent;
     import android.net.Uri;
     import android.os.AsyncTask;
@@ -38,7 +40,7 @@
             earthquakeAsync.execute();
         }
 
-        public class EarthquakeAsync extends AsyncTask<URL, Void, String> {
+        public class EarthquakeAsync extends AsyncTask<URL, Void, ArrayList<ReportWord>> {
 
             private String today = getDate(0);
             private String yesterday = getDate(-1);
@@ -49,10 +51,11 @@
 
             StringBuilder stringBuilder = new StringBuilder();
 
-            public QueryJSON classQueryJSON;
+            private QueryJSON classQueryJSON;
+            ArrayList<ReportWord> words;
 
             @Override
-            protected String doInBackground(URL... urls) {
+            protected ArrayList<ReportWord> doInBackground(URL... urls) {
 
                 URL url;
                 HttpURLConnection httpURLConnection = null;
@@ -74,7 +77,7 @@
                 try{
                     /** Check if the url is null or not. If yes, return empty string */
                     if (url == null){
-                        return jsonResponse;
+                        return null;
                     }
 
                     httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -142,18 +145,24 @@
                 }
 
 
-                return stringBuilder.toString();
-            }
-
-            @Override
-            protected void onPostExecute(String s) {
-                //super.onPostExecute(s);
-
                 classQueryJSON = new QueryJSON(stringBuilder.toString());
 
                 /** Use ArrayList to hold data that needs to be displayed on the UI */
                 //ArrayList words = new ArrayList();
                 final ArrayList<ReportWord> words = classQueryJSON.getQuakeDetails();
+
+                return words;
+            }
+
+            @Override
+            protected void onPostExecute(final ArrayList<ReportWord> words) {
+                //super.onPostExecute(s);
+
+/*                classQueryJSON = new QueryJSON(stringBuilder.toString());
+
+                *//** Use ArrayList to hold data that needs to be displayed on the UI *//*
+                //ArrayList words = new ArrayList();
+                final ArrayList<ReportWord> words = classQueryJSON.getQuakeDetails();*/
 
                 /** Add location to the ArrayList of ReportWord Object */
 
