@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -64,6 +65,14 @@ public class EarthquakeLoader extends AsyncTaskLoader<List<ReportWord>> {
         InputStreamReader inputStreamReader = null;
         BufferedReader bufferedReader = null;
         String jsonResponse = null;
+
+        //Delay the response for 2000ms. Test only
+        try{
+            Thread.sleep(2000);
+        }
+        catch (InterruptedException e){
+            Log.v("Thread Issue", e.toString());
+        }
 
         /** Create URL object. It throws the MalformedURLException */
         try{

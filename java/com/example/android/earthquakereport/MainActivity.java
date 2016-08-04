@@ -4,6 +4,8 @@
     import android.content.AsyncTaskLoader;
     import android.content.Context;
     import android.content.Intent;
+    import android.net.ConnectivityManager;
+    import android.net.NetworkInfo;
     import android.net.Uri;
     import android.os.AsyncTask;
     import android.app.LoaderManager;
@@ -15,6 +17,8 @@
     import android.widget.AdapterView;
     import android.widget.ArrayAdapter;
     import android.widget.ListView;
+    import android.widget.ProgressBar;
+    import android.widget.TextView;
     import android.widget.Toast;
 
     import java.io.BufferedReader;
@@ -41,6 +45,8 @@
 
         ReportAdapter adapter;
         ListView listView;
+        TextView emptyView;
+        ProgressBar progressBar;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +58,14 @@
 
             /** Use ListView to display scrollable list */
             listView = (ListView) findViewById(R.id.listView);
+
+            /** Use empty View to display blank screen in case Adapter is empty */
+            emptyView = (TextView) findViewById(R.id.emptyView);
+            listView.setEmptyView(emptyView);
+
+            /** Set the progress bar until Loader is finished */
+            progressBar = (ProgressBar) findViewById(R.id.progressBar);
+            progressBar.setVisibility(View.VISIBLE);
 
             /** Set the adapter that provides the data and the views to represent that data in the widget
              * Initially Adapter do not have any data. Once Loader is executed, Adapter will update the UI with the new data
@@ -76,8 +90,26 @@
                 }
             });
 
-            /** Prepare the loader. Either re-connect with an existing one, or start a new one. */
-            getLoaderManager().initLoader(0, null, this);
+            /** Pull the corrent state of Network connectivity */
+            ConnectivityManager cntManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            /** Describe the status of the Network. Calling getActiveNetworkInfo
+             * will return details about the currently active default data network
+             */
+            NetworkInfo networkInfo = cntManager.getActiveNetworkInfo();
+
+            /** If Network is available, Call the Loader Manager. Otherwise, No Network Connection. */
+            if (networkInfo != null && networkInfo.isConnected()){
+                /** Prepare the loader. Either re-connect with an existing one, or start a new one. */
+                getLoaderManager().initLoader(0, null, this);
+            }
+            else {
+                /** Set the progress Bar invisible once Loader is finished */
+                progressBar.setVisibility(View.GONE);
+
+                //Set empty view to display No Network Connection
+                emptyView.setText("No Network Connection. Try Later");
+            }
         }
 
         /** If Loaded doesn't exist then this method will create a custom Loader object */
@@ -91,6 +123,12 @@
 
         @Override
         public void onLoadFinished(Loader<List<ReportWord>> loader, List<ReportWord> data) {
+
+            /** Set the progress Bar invisible once Loader is finished */
+            progressBar.setVisibility(View.GONE);
+
+            //Set empty view to display No Earthquake Found
+            emptyView.setText("No Earthquake Found");
 
             //Check if Loader is fetched any data
             if(data != null && !data.isEmpty())
