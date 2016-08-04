@@ -1,10 +1,13 @@
     package com.example.android.earthquakereport;
 
+    import android.app.LoaderManager.LoaderCallbacks;
     import android.content.AsyncTaskLoader;
     import android.content.Context;
     import android.content.Intent;
     import android.net.Uri;
     import android.os.AsyncTask;
+    import android.app.LoaderManager;
+    import android.content.Loader;
     import android.support.v7.app.AppCompatActivity;
     import android.os.Bundle;
     import android.util.Log;
@@ -27,190 +30,75 @@
     import java.util.ArrayList;
     import java.util.Calendar;
     import java.util.Date;
+    import java.util.List;
 
-    public class MainActivity extends AppCompatActivity {
+    /** When Android App Launches, this class is being called.
+     * This implement LoaderManager to handle background task while Users interacting with
+     * Main UI Threads
+     */
+
+    public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<ReportWord>>{
+
+        ReportAdapter adapter;
+        ListView listView;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
 
-            /** Kick off the network request */
-            EarthquakeAsync earthquakeAsync = new EarthquakeAsync();
-            earthquakeAsync.execute();
-        }
+            /** Use Subclass of ArrayAdapter to Hold the Array of arbitrary object */
+            adapter = new ReportAdapter(this, new ArrayList<ReportWord>());
 
-        public class EarthquakeAsync extends AsyncTask<URL, Void, ArrayList<ReportWord>> {
+            /** Use ListView to display scrollable list */
+            listView = (ListView) findViewById(R.id.listView);
 
-            private String today = getDate(0);
-            private String yesterday = getDate(-1);
+            /** Set the adapter that provides the data and the views to represent that data in the widget
+             * Initially Adapter do not have any data. Once Loader is executed, Adapter will update the UI with the new data
+             */
+            listView.setAdapter(adapter);
 
-            private String USGS_URL_JSON=
-                    "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime="+yesterday+"&endtime="+today+"&minmag=4&limit=10";
-                    //"http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-01-02";
+            /** Set the onClickListener so that it will populate details in a web browser after clicking each earthquake report */
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
 
-            StringBuilder stringBuilder = new StringBuilder();
+                    /** Get the url details from the position */
+                    ReportWord newWord = adapter.getItem(position);
+                    String url = newWord.getURL();
 
-            private QueryJSON classQueryJSON;
-            ArrayList<ReportWord> words;
+                    /** Create a new Intent to open a browser when user clicks on the report */
+                    Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 
-            @Override
-            protected ArrayList<ReportWord> doInBackground(URL... urls) {
-
-                URL url;
-                HttpURLConnection httpURLConnection = null;
-                InputStream inputStream = null;
-                InputStreamReader inputStreamReader = null;
-                BufferedReader bufferedReader = null;
-                String jsonResponse = null;
-
-                /** Create URL object. It throws the MalformedURLException */
-                try{
-                    url = new URL(USGS_URL_JSON);
-                }
-                catch (MalformedURLException e){
-                    Log.v("USGS_JSON", "" + e);
-                    return null;
-                }
-
-                /** Perform a HTTP request */
-                try{
-                    /** Check if the url is null or not. If yes, return empty string */
-                    if (url == null){
-                        return null;
-                    }
-
-                    httpURLConnection = (HttpURLConnection) url.openConnection();
-
-                    //Set Request Type
-                    httpURLConnection.setRequestMethod("GET");
-
-                    //Set Read time-out
-                    httpURLConnection.setReadTimeout(10000 /* milliseconds */);
-
-                    //Set Connect time-out
-                    httpURLConnection.setConnectTimeout(15000 /* milliseconds */);
-
-                    //Connect the URL
-                    httpURLConnection.connect();
-
-                    try{
-                        if (httpURLConnection.getResponseCode() == 200){
-
-                            /** Returns an input stream (byte) that reads from this open connection */
-                            inputStream = httpURLConnection.getInputStream();
-
-                            /** Convert byte stream to character stream using specific charset */
-                            inputStreamReader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
-
-                            /** Reads text from a character-input stream. Buffer character */
-                            bufferedReader = new BufferedReader(inputStreamReader);
-
-                            /** Read text from the buffer character and append into String object */
-                            jsonResponse = bufferedReader.readLine();
-
-                            /** while loop to append each line into the String object */
-                            while (jsonResponse != null){
-
-                                //Append
-                                stringBuilder.append(jsonResponse);
-
-                                //Read next line
-                                jsonResponse = bufferedReader.readLine();
-                            }
-                        }
-
-                    }catch (IOException e){
-                        Log.e("Earthquake Report", e.toString());
-                    }
-
-                }
-                catch (IOException e){
-                    Log.v("USGS_JSON_HTTP", "" + e);
-                    return null;
-                }
-
-                finally {
-                    if (httpURLConnection != null)
-                        httpURLConnection.disconnect();
-
-                    if (inputStream != null){
-                        try{
-                            inputStream.close();
-                        }
-                        catch (IOException e){
-                            Log.v("InputStream", "" + e);
-                        }
-                    }
-                }
-
-
-                classQueryJSON = new QueryJSON(stringBuilder.toString());
-
-                /** Use ArrayList to hold data that needs to be displayed on the UI */
-                //ArrayList words = new ArrayList();
-                final ArrayList<ReportWord> words = classQueryJSON.getQuakeDetails();
-
-                return words;
-            }
-
-            @Override
-            protected void onPostExecute(final ArrayList<ReportWord> words) {
-                //super.onPostExecute(s);
-
-/*                classQueryJSON = new QueryJSON(stringBuilder.toString());
-
-                *//** Use ArrayList to hold data that needs to be displayed on the UI *//*
-                //ArrayList words = new ArrayList();
-                final ArrayList<ReportWord> words = classQueryJSON.getQuakeDetails();*/
-
-                /** Add location to the ArrayList of ReportWord Object */
-
-                /** Use Subclass of ArrayAdapter to Hold the Array of arbitrary object */
-                ReportAdapter adapter = new ReportAdapter(getApplicationContext(), words);
-
-                /** Use ListView to display scrollable list */
-                ListView listView = (ListView) findViewById(R.id.listView);
-
-                /** Set the adapter that provides the data and the views to represent that data in the widget */
-                listView.setAdapter(adapter);
-
-                /** Set the onClickListener so that it will populate details in a web browser after clicking each earthquake report */
-                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-
-                        /** Get the url details from the position */
-                        ReportWord newWord = words.get(position);
-                        String url = newWord.getURL();
-
-                        /** Create a new Intent to open a browser when user clicks on the report */
-                        Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    //Verify that the Intent will resolve to an Activity
+                    if (webIntent.resolveActivity(getPackageManager()) != null)
                         startActivity(webIntent);
-                    }
-                });
-            }
+                }
+            });
+
+            /** Prepare the loader. Either re-connect with an existing one, or start a new one. */
+            getLoaderManager().initLoader(0, null, this);
         }
 
+        /** If Loaded doesn't exist then this method will create a custom Loader object */
 
-        /*public String getDate(long time){
-            *//** Format the UNIX Time in human readable *//*
-            SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-DD");
-            String date = dateFormatter.format(new Date(time));
-
-            return date;
-        }*/
-
-        public String getDate(int difference){
-
-            /** Format the UNIX Time in human readable */
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.DATE, difference);
-
-            Log.v("Date", dateFormat.format(cal.getTime()));
-
-            return dateFormat.format(cal.getTime());
+        @Override
+        public Loader<List<ReportWord>> onCreateLoader(int id, Bundle args) {
+            return new EarthquakeLoader(this);
         }
 
-    }
+        /** This method get called when Loaded is finished loading it's background job */
+
+        @Override
+        public void onLoadFinished(Loader<List<ReportWord>> loader, List<ReportWord> data) {
+
+            //Check if Loader is fetched any data
+            if(data != null && !data.isEmpty())
+                adapter.addAll(data);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<List<ReportWord>> loader) {
+            adapter.clear();
+        }
+}

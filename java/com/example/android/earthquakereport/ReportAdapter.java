@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by 502537203 on 7/21/2016.
@@ -21,7 +22,7 @@ public class ReportAdapter extends ArrayAdapter<ReportWord> {
     int colorForMagnitude;
 
     /** Create public constructor */
-    public ReportAdapter(Context context, ArrayList<ReportWord> reports){
+    public ReportAdapter(Context context, List<ReportWord> reports){
         super(context, 0, reports);
     }
 
